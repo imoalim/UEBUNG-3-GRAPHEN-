@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <utility>
 #include <vector>
 #include <unordered_map>
 #include <queue>
@@ -12,7 +13,7 @@ struct Station {
     std::string name;
     int cost;
 
-    Station(const std::string& name, int cost) : name(name), cost(cost) {}
+    Station(std::string  name, int cost) : name(std::move(name)), cost(cost) {}
 };
 
 using Graph = std::unordered_map<std::string, std::vector<Station>>;
