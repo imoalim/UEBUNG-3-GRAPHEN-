@@ -1,0 +1,3 @@
+C:/Users/zelih/CLionProjects/3_ALG/cmake-build-debug/CMakeFiles/3_ALG.dir
+C:/Users/zelih/CLionProjects/3_ALG/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/zelih/CLionProjects/3_ALG/cmake-build-debug/CMakeFiles/rebuild_cache.dir
