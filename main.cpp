@@ -7,8 +7,10 @@
 #include <limits>
 #include <string>
 #include <sstream>
+#include <cmath>
 
 using namespace std;
+
 
 struct Edge {
     string station;
@@ -19,10 +21,11 @@ struct Edge {
 struct Node {
     string station;
     int distance;
+    int heuristic; // Heuristic value for A* eine art Annahme
 };
 
 bool operator<(const Node &a, const Node &b) {
-    return a.distance > b.distance;
+    return (a.distance + a.heuristic) > (b.distance + b.heuristic);
 }
 
 using Graph = map<string, vector<Edge>>;
@@ -68,7 +71,15 @@ Graph read_file(const string &filename) {
     return graph;
 }
 
-pair<deque<pair<string, string>>, int> find_path(const Graph &graph, const string &start, const string &end) {
+
+int calculate_heuristic(const string &station, const string &end) {
+    // Simple heuristic value: number of character differences between the stations
+    int diff = abs(static_cast<int>(station.size()) - static_cast<int>(end.size()));
+    return diff;
+}
+
+
+pair<deque<pair<string, string>>, int> find_path_dijkstra(const Graph &graph, const string &start, const string &end) {
     map<string, int> distances;
     for (const auto &[station, _]: graph) {
         distances[station] = numeric_limits<int>::max();
@@ -115,6 +126,65 @@ pair<deque<pair<string, string>>, int> find_path(const Graph &graph, const strin
     return {path, total_cost};
 }
 
+
+pair<deque<pair<string, string>>, int> find_path_astar(const Graph &graph, const string &start, const string &end) {
+    map<string, int> distances;
+    for (const auto &[station, _]: graph) {
+        //jede distance wird mit dem größtmöglichen Wert für den Datentyp int initializert
+        distances[station] = numeric_limits<int>::max();
+    }
+    // Initialisiere den Start mit 0
+    distances[start] = 0;
+    map<string, string> previous_nodes;
+    map<string, string> previous_lines;
+
+    priority_queue<Node> queue;
+    // Füge die Startstation zur priority queue hinzu
+    // Die Priorität wird durch die Summe aus der bisher zurückgelegten Strecke (distance)
+    // und der geschätzten Reststrecke (heuristic) bestimmt.
+    queue.push({start, 0, calculate_heuristic(start, end)});
+
+    while (!queue.empty()) {
+        Node current = queue.top();
+        queue.pop();
+
+        if (current.station == end) {
+            break;
+        }
+
+        if (current.distance > distances[current.station]) {
+            continue;
+        }
+
+        for (const auto &neighbor: graph.at(current.station)) {
+            int distance = current.distance + neighbor.time;
+            if (distance < distances[neighbor.station]) {
+                // Aktualisiere die Distanz zum Nachbarn und speichere den Vorgänger und die Linie
+                distances[neighbor.station] = distance;
+                previous_nodes[neighbor.station] = current.station;
+                previous_lines[neighbor.station] = neighbor.line_name;
+                // Füge den Nachbarn mit aktualisierter Distanz und Heuristik zur Prioritätswarteschlange hinzu
+                queue.push({neighbor.station, distance, calculate_heuristic(neighbor.station, end)});
+            }
+        }
+    }
+
+    deque<pair<string, string>> path;
+    string current_node = end;
+    while (!previous_nodes[current_node].empty()) {
+        // Baue den Pfad von hinten auf, indem jeder Knoten und die zugehörige Linie hinzugefügt werden
+        path.emplace_front(current_node, previous_lines[current_node]);
+        current_node = previous_nodes[current_node];
+    }
+    // Füge die Startstation als erstes Element zum Pfad hinzu
+    path.emplace_front(start, "");
+
+    int total_cost = distances[end];
+    // Gib den Pfad und die Gesamtkosten zurück
+    return {path, total_cost};
+}
+
+
 void pretty_print(const deque<pair<string, string>> &path, int total_cost) {
     if (path.size() == 1) {
         cout << "No path found" << endl;
@@ -123,22 +193,30 @@ void pretty_print(const deque<pair<string, string>> &path, int total_cost) {
     string previous_line;
     for (const auto &[station, line]: path) {
         if (!line.empty() && line != previous_line) {
-            cout << "Change to " << line << endl;
+            cout << "Transfer to Line " << line << endl;
         }
         cout << station << endl;
         previous_line = line;
     }
-    cout << "Total time: " << total_cost << endl;
+    cout << "Total travel time: " << total_cost << endl;
 }
 
 int main(int argc, char *argv[]) {
-    string filename_graph = "paths.txt";
+    string filename_graph = "test.txt";
     string start_station = argv[1];
     string end_station = argv[2];
 
     Graph graph = read_file(filename_graph);
-    auto [path, total_cost] = find_path(graph, start_station, end_station);
-    pretty_print(path, total_cost);
+
+    cout << "Dijkstra's Algorithm:" << endl;
+    auto [dijkstra_path, dijkstra_total_cost] = find_path_dijkstra(graph, start_station, end_station);
+    pretty_print(dijkstra_path, dijkstra_total_cost);
+
+    cout << endl;
+
+    cout << "A* Algorithm:" << endl;
+    auto [astar_path, astar_total_cost] = find_path_astar(graph, start_station, end_station);
+    pretty_print(astar_path, astar_total_cost);
 
     return 0;
 }

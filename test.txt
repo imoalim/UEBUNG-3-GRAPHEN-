@@ -1,0 +1,4 @@
+U1: "Praterstern" 1 "Nestroyplatz" 1 "Schwedenplatz" 1 "Stephansplatz" 2 "Karlsplatz" 2 "Taubstummengasse"
+U2: "Karlsplatz" 1 "Museumsquartier" 1 "Volkstheater" 1 "Rathaus" 2 "Schottentor" 2 "Schottenring" 1 "Taborstrasse" 2 "Praterstern"
+U3: "Landstrasse" 1 "Stubentor" 1 "Stephansplatz" 2 "Herrengasse" 1 "Volkstheater"
+U4: "Rossauerlaende" 2 "Schottenring" 1 "Schwedenplatz" 2 "Landstrasse" 1 "Stadtpark" 2 "Karlsplatz" 2 "Kettenbrueckengasse"
