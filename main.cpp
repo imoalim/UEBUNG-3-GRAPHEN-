@@ -1,190 +1,144 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
-#include <utility>
-#include <vector>
-#include <unordered_map>
 #include <queue>
+#include <map>
+#include <vector>
+#include <deque>
 #include <limits>
-#include <iomanip>
-#include <algorithm>
+#include <string>
+#include <sstream>
 
-struct Station {
-    std::string name;
-    int cost;
+using namespace std;
 
-    Station(std::string  name, int cost) : name(std::move(name)), cost(cost) {}
+struct Edge {
+    string station;
+    int time;
+    string line_name;
 };
 
-using Graph = std::unordered_map<std::string, std::vector<Station>>;
+struct Node {
+    string station;
+    int distance;
+};
 
-void readGraphFromFile(const std::string& filename, Graph& graph) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Error opening file " << filename << std::endl;
-        return;
-    }
-    std::string line;
-
-    while (std::getline(file, line)) {
-        std::istringstream iss(line);
-        std::string lineName;
-        std::getline(iss, lineName, ':');
-
-        std::vector<Station> stations;
-
-        std::string stationName;
-        int cost;
-        char delimiter;
-
-        while (iss >> std::quoted(stationName) >> cost >> delimiter) {
-            // Remove quotes from station name
-            stationName = stationName.substr(1, stationName.size() - 2);
-            stations.emplace_back(stationName, cost);
-        }
-
-        graph[lineName] = stations;
-    }
-    file.close();
+bool operator<(const Node &a, const Node &b) {
+    return a.distance > b.distance;
 }
 
+using Graph = map<string, vector<Edge>>;
 
+std::vector<std::string> splitAndStrip(const std::string &line, char delimiter) {
+    std::vector<std::string> parts;
+    std::istringstream iss(line);
+    std::string part;
 
-std::vector<std::string> findShortestPath(const Graph& graph, const std::string& start, const std::string& goal) {
-    std::unordered_map<std::string, int> distances;
-    std::unordered_map<std::string, std::string> previous;
-    std::priority_queue<std::pair<int, std::string>, std::vector<std::pair<int, std::string>>, std::greater<>> pq;
-
-    // Check that start and goal stations exist in the graph
-    if (graph.find(start) == graph.end() || graph.find(goal) == graph.end()) {
-        std::cerr << "Start or goal station not found in graph." << std::endl;
-        return {};
-    }
-
-    // Initialize distances
-    for (const auto& entry : graph) {
-        const std::string& station = entry.first;
-        distances[station] = std::numeric_limits<int>::max();
-        previous[station] = "";
-    }
-
-    distances[start] = 0;
-    pq.emplace(0, start);
-
-    while (!pq.empty()) {
-        const std::string currentStation = pq.top().second;
-        pq.pop();
-
-        if (currentStation == goal) {
-            // Destination reached, build and return the path
-            std::vector<std::string> path;
-            std::string station = goal;
-
-            while (!station.empty()) {
-                path.insert(path.begin(), station);
-                station = previous[station];
-            }
-
-            return path;
-        }
-
-        const int currentDistance = distances[currentStation];
-
-        for (const auto& station : graph.at(currentStation)) {
-            const int newDistance = currentDistance + station.cost;
-
-            if (newDistance < distances[station.name]) {
-                distances[station.name] = newDistance;
-                previous[station.name] = currentStation;
-                pq.emplace(newDistance, station.name);
-            }
+    while (std::getline(iss, part, delimiter)) {
+        // Remove leading and trailing whitespaces
+        part.erase(part.begin(), std::find_if(part.begin(), part.end(), [](unsigned char ch) {
+            return !std::isspace(ch);
+        }));
+        part.erase(std::find_if(part.rbegin(), part.rend(), [](unsigned char ch) {
+            return !std::isspace(ch);
+        }).base(), part.end());
+        // Add the part to the vector only if it is not empty
+        if (!part.empty()) {
+            parts.push_back(part);
         }
     }
-
-    std::cerr << "No path found between " << start << " and " << goal << std::endl;
-    return {}; // No path found
+    return parts;
 }
 
-void printPath(const std::vector<std::string>& path, const Graph& graph){
-    if (path.empty()) {
-        std::cout << "No path found." << std::endl;
-        return;
-    }
-
-    std::string currentLine;
-    std::string prevLine;
-    int totalCost = 0;
-
-    for (size_t i = 1; i < path.size(); ++i) {
-        const std::string &currentStation = path[i];
-        const std::string &prevStation = path[i - 1];
-
-        // Check that current and previous stations exist in the graph
-        if (graph.find(currentStation) == graph.end() || graph.find(prevStation) == graph.end()) {
-            std::cerr << "Invalid station in path: " << prevStation << " -> " << currentStation << std::endl;
-            return;
-        }
-
-        for (const auto &entry: graph) {
-            const std::string &lineName = entry.first;
-            const std::vector<Station> &stations = entry.second;
-
-            auto currentStationIt = std::find_if(stations.begin(), stations.end(),
-                                                 [&currentStation](const Station &station) {
-                                                     return station.name == currentStation;
-                                                 });
-
-            auto prevStationIt = std::find_if(stations.begin(), stations.end(),
-                                              [&prevStation](const Station &station) {
-                                                  return station.name == prevStation;
-                                              });
-
-            if (currentStationIt != stations.end() && prevStationIt != stations.end()) {
-                if (lineName != currentLine) {
-                    if (!currentLine.empty()) {
-                        std::cout << "Line " << lineName << ":" << std::endl;
-                        currentLine = lineName;
-                    }
-
-                    totalCost += currentStationIt->cost;
-                    std::cout << currentStation << std::endl;
-                }
-            }
-        }
-
-        // Print the total cost and the closing code block
-        std::cout << "Total cost: " << totalCost << std::endl;
-        std::cout << " " << std::endl;
-    }
-
-}
-
-
-int main(int argc, char* argv[]) {
-    if(argc != 4) {
-        std::cerr << "Usage: " << argv[0] << " <filename> <start_station> <goal_station>" << std::endl;
-        return 1;
-    }
-
-    const std::string filename = argv[1];
-    const std::string start = argv[2];
-    const std::string goal = argv[3];
-
+Graph read_file(const string &filename) {
     Graph graph;
-    readGraphFromFile(filename, graph);
+    ifstream file(filename);
 
-    // Print out the contents of the graph
-    /*for (auto const& [lineName, stations] : graph) {
-        std::cout << lineName << ": ";
-        for (auto const& station : stations) {
-            std::cout << station.name << " " << station.cost << ", ";
+    string line;
+    while (getline(file, line)) {
+        auto parts = splitAndStrip(line, '\"');
+        string line_name = parts[0].substr(0, parts[0].size() - 1);
+        for (size_t i = 1; i < parts.size() - 2; i += 2) {
+            string station1 = parts[i];
+            int time = stoi(parts[i + 1]);
+            string station2 = parts[i + 2];
+
+            graph[station1].push_back({station2, time, line_name});
+            graph[station2].push_back({station1, time, line_name});
         }
-        std::cout << std::endl;
-    }*/
+    }
+    return graph;
+}
 
-    std::vector<std::string> path = findShortestPath(graph, start, goal);
+pair<deque<pair<string, string>>, int> find_path(const Graph &graph, const string &start, const string &end) {
+    map<string, int> distances;
+    for (const auto &[station, _]: graph) {
+        distances[station] = numeric_limits<int>::max();
+    }
+    distances[start] = 0;
+    map<string, string> previous_nodes;
+    map<string, string> previous_lines;
 
-    printPath(path, graph);
+    priority_queue<Node> queue;
+    queue.push({start, 0});
+
+    while (!queue.empty()) {
+        Node current = queue.top();
+        queue.pop();
+
+        if (current.station == end) {
+            break;
+        }
+
+        if (current.distance > distances[current.station]) {
+            continue;
+        }
+
+        for (const auto &neighbor: graph.at(current.station)) {
+            int distance = current.distance + neighbor.time;
+            if (distance < distances[neighbor.station]) {
+                distances[neighbor.station] = distance;
+                previous_nodes[neighbor.station] = current.station;
+                previous_lines[neighbor.station] = neighbor.line_name;
+                queue.push({neighbor.station, distance});
+            }
+        }
+    }
+
+    deque<pair<string, string>> path;
+    string current_node = end;
+    while (!previous_nodes[current_node].empty()) {
+        path.emplace_front(current_node, previous_lines[current_node]);
+        current_node = previous_nodes[current_node];
+    }
+    path.emplace_front(start, "");
+
+    int total_cost = distances[end];
+    return {path, total_cost};
+}
+
+void pretty_print(const deque<pair<string, string>> &path, int total_cost) {
+    if (path.size() == 1) {
+        cout << "No path found" << endl;
+        return;
+    }
+    string previous_line;
+    for (const auto &[station, line]: path) {
+        if (!line.empty() && line != previous_line) {
+            cout << "Change to " << line << endl;
+        }
+        cout << station << endl;
+        previous_line = line;
+    }
+    cout << "Total time: " << total_cost << endl;
+}
+
+int main(int argc, char *argv[]) {
+    string filename_graph = "paths.txt";
+    string start_station = argv[1];
+    string end_station = argv[2];
+
+    Graph graph = read_file(filename_graph);
+    auto [path, total_cost] = find_path(graph, start_station, end_station);
+    pretty_print(path, total_cost);
 
     return 0;
 }
