@@ -10,7 +10,7 @@
 #include <cmath>
 
 using namespace std;
-#define DEFAULT_DISTANCE 1
+
 
 struct Edge {
     string station;
