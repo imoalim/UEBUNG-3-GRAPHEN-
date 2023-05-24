@@ -8,9 +8,9 @@
 #include <string>
 #include <sstream>
 #include<windows.h>
+#include <chrono>
 
 HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-
 
 //Structs
 struct Edge {
@@ -238,6 +238,43 @@ int main(int argc, char *argv[]) {
 
     auto [astar_path, astar_total_cost] = find_path_astar(graph, start_station, end_station);
     pretty_print(astar_path, astar_total_cost);
+
+
+
+    SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN);
+    std::cout << "\n\n+++       Test cases         +++" << std::endl;
+    SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+
+
+    //  Test cases for the algorithms (Dijkstra and A*)
+    std::vector<std::pair<std::string, std::string>> test_cases = {
+            {"Handelskai", "Praterstern"},
+            {"Floridsdorf", "Schottenring"},
+            {"Schwedenplatz", "Westbahnhof"}
+    };
+
+    for (const auto& [start_station, end_station] : test_cases) {
+        // Dijkstra algorithm
+        auto start_dijkstra = std::chrono::high_resolution_clock::now();
+        auto result_dijkstra = find_path_dijkstra(graph, start_station, end_station);
+        auto end_dijkstra = std::chrono::high_resolution_clock::now();
+        auto elapsed_time_dijkstra = std::chrono::duration_cast<std::chrono::microseconds>(end_dijkstra - start_dijkstra).count();
+
+        //  A* algorithm
+        auto start_astar = std::chrono::high_resolution_clock::now();
+        auto result_astar = find_path_astar(graph, start_station, end_station);
+        auto end_astar = std::chrono::high_resolution_clock::now();
+        auto elapsed_time_astar = std::chrono::duration_cast<std::chrono::microseconds>(end_astar - start_astar).count();
+
+        SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE);
+        std::cout << "Test case: " << start_station << " -> " << end_station << std::endl;
+        SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
+        std::cout << "Dijkstra elapsed time: " << elapsed_time_dijkstra << " microseconds" << std::endl;
+        std::cout << "A* elapsed time: " << elapsed_time_astar << " microseconds" << std::endl;
+    }
+
 
     return 0;
 }
