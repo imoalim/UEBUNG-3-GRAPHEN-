@@ -251,7 +251,8 @@ int main(int argc, char *argv[]) {
     std::vector<std::pair<std::string, std::string>> test_cases = {
             {"Handelskai", "Praterstern"},
             {"Floridsdorf", "Schottenring"},
-            {"Schwedenplatz", "Westbahnhof"}
+            {"Schwedenplatz", "Westbahnhof"},
+            {"Kagraner Platz", "Migerkastrasse" }
     };
 
     for (const auto& [start_station, end_station] : test_cases) {
