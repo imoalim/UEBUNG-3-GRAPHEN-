@@ -78,9 +78,9 @@ int calculate_heuristic(const string &station, const string &end) {
     return diff;
 }
 
-
 pair<deque<pair<string, string>>, int> find_path_dijkstra(const Graph &graph, const string &start, const string &end) {
     map<string, int> distances;
+    int count = 0;
     for (const auto &[station, _]: graph) {
         distances[station] = numeric_limits<int>::max();
     }
@@ -92,6 +92,7 @@ pair<deque<pair<string, string>>, int> find_path_dijkstra(const Graph &graph, co
     queue.push({start, 0});
 
     while (!queue.empty()) {
+        count++;
         Node current = queue.top();
         queue.pop();
 
@@ -123,12 +124,14 @@ pair<deque<pair<string, string>>, int> find_path_dijkstra(const Graph &graph, co
     path.emplace_front(start, "");
 
     int total_cost = distances[end];
+    cout << "Iterations: " <<   count << endl;
     return {path, total_cost};
 }
 
 
 pair<deque<pair<string, string>>, int> find_path_astar(const Graph &graph, const string &start, const string &end) {
     map<string, int> distances;
+    int count = 0;
     for (const auto &[station, _]: graph) {
         //jede distance wird mit dem größtmöglichen Wert für den Datentyp int initializert
         distances[station] = numeric_limits<int>::max();
@@ -145,13 +148,13 @@ pair<deque<pair<string, string>>, int> find_path_astar(const Graph &graph, const
     queue.push({start, 0, calculate_heuristic(start, end)});
 
     while (!queue.empty()) {
+        count ++;
         Node current = queue.top();
         queue.pop();
 
         if (current.station == end) {
             break;
         }
-
         if (current.distance > distances[current.station]) {
             continue;
         }
@@ -177,10 +180,11 @@ pair<deque<pair<string, string>>, int> find_path_astar(const Graph &graph, const
         current_node = previous_nodes[current_node];
     }
     // Füge die Startstation als erstes Element zum Pfad hinzu
-    path.emplace_front(start, "");
+    path.emplace_front(start, previous_lines[start]);
 
     int total_cost = distances[end];
     // Gib den Pfad und die Gesamtkosten zurück
+    cout << "Iterations: " <<   count << endl;
     return {path, total_cost};
 }
 
