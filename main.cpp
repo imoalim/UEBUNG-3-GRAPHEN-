@@ -199,7 +199,6 @@ void pretty_print(const std::deque<std::pair<std::string, std::string>> &path, i
             SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
             std::cout << " --> Transfer to Line " << line << std::endl;
             SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-
         }
         std::cout << " - " << station << std::endl;
         ++stations;
@@ -216,7 +215,6 @@ void pretty_print(const std::deque<std::pair<std::string, std::string>> &path, i
 
 
 /***                                  ***  MAIN   ***                                                              ***/
-
 int main(int argc, char *argv[]) {
     std::string filename_graph = "paths.txt";
     std::string start_station = argv[1];
@@ -229,23 +227,38 @@ int main(int argc, char *argv[]) {
     std::cout << "\n +++   Dijkstra's Algorithm    +++" << std::endl;
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 
+    auto start_time = std::chrono::high_resolution_clock::now();
     auto [dijkstra_path, dijkstra_total_cost] = find_path_dijkstra(graph, start_station, end_station);
     pretty_print(dijkstra_path, dijkstra_total_cost);
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    // Calculates the duration of the search
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+    std::cout << " --> Search Duration: " << duration.count() << " ms" << std::endl;
+    SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+
 
     SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN);
     std::cout << "\n ***       A* Algorithm        ***" << std::endl;
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 
+    auto start_time2 = std::chrono::high_resolution_clock::now();
     auto [astar_path, astar_total_cost] = find_path_astar(graph, start_station, end_station);
     pretty_print(astar_path, astar_total_cost);
+    auto end_time2 = std::chrono::high_resolution_clock::now();
+
+
+    auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(end_time2 - start_time2);
+    SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
+    std::cout << " --> Search Duration: " << duration2.count() << " ms" << std::endl;
+    SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 
 
 
     SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN);
     std::cout << "\n\n+++       Test cases         +++" << std::endl;
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-
-
 
     //  Test cases for the algorithms (Dijkstra and A*)
     std::vector<std::pair<std::string, std::string>> test_cases = {
@@ -273,7 +286,9 @@ int main(int argc, char *argv[]) {
         SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 
         std::cout << "Dijkstra elapsed time: " << elapsed_time_dijkstra << " microseconds" << std::endl;
+        std::cout<< "-----------------------------------> " << result_dijkstra.first.size() << std::endl;
         std::cout << "A* elapsed time: " << elapsed_time_astar << " microseconds" << std::endl;
+        std::cout<<" -----------------------------------> " << result_astar.first.size() << std::endl;
     }
 
 
